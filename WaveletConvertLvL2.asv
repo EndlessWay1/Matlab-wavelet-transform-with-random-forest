@@ -1,0 +1,21 @@
+function [LL1, HL1,LH1, HH1, LL2, HL2, LH2, HH2] = WaveletConvertLvL2(img)
+%WAVELETCONVERT Summary of this function goes here
+
+options.wavelet_type = 'daubechies';
+options.wavelet_vm = 3;
+
+n = 2; 
+Jmax = log2(size(img, 1));
+Jmin = Jmax - n;
+
+
+% Perform 2D forward wavelet transform
+MW = perform_wavelet_transform(img, Jmin, +1, options);
+
+% Extract subbands
+[LL1, HL1, LH1, HH1] = extract_wavelet_level(MW, 1);
+
+[LL2, HL2, LH2, HH2] = extract_wavelet_level(MW, 2);
+
+end
+
