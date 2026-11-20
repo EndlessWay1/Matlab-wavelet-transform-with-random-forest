@@ -13,7 +13,9 @@ function stats = GrayDataExtraction(Subands)
 
     % Preallocate feature table
     featureNames = {'contrast', 'correlation', ...
-                    'energy', 'homogeneity', 'entropy', 'dissimilarity'};
+                    'energy', ...
+                    'homogeneity', 'entropy', 'dissimilarity'
+                    };
 
     directions = {'0', '45', '90', '135'};
 

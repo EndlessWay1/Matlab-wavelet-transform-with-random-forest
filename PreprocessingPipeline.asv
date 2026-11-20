@@ -1,8 +1,0 @@
-clear all; clc;
-
-[data, label] = GetData();
-
-data = cellfun(@(img) im2gray(img), data, ...
-               'UniformOutput', false);
-           
-[HL1, LH1, HH1, LL2, HL2, LH2, HH2] = WaveletImgData(data);
