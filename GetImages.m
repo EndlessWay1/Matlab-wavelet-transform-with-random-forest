@@ -1,8 +1,8 @@
 
-function [img,label] = GetImagesG1020()
+function [img,label] = GetImages(data_path, csv_path)
 
-    allFiles = dir('G1020/Images_Cropped/*.jpg');
-    labels = readtable('G1020/G1020.csv');
+    allFiles = dir(data_path);
+    labels = readtable(csv_path);
 
     reshapeSize = [256, 256, 3];
     dataSize = length(allFiles);

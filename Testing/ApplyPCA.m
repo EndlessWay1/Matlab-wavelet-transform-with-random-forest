@@ -1,0 +1,199 @@
+clear all; clc; close all;
+
+% Load dataset
+data = readtable("GLCM_Wavelet_Features.csv");
+
+% Extract features and labels
+x = data{:, 1:end-1};
+y = data{:, end};
+
+[n, p] = size(x);
+
+fprintf('Number of samples: %d\n', n);
+fprintf('Number of original features: %d\n', p);
+
+% Check class distribution
+tabulate(y);
+
+% Split dataset into training and testing
+rng(42); % Reproducibility
+
+cv = cvpartition(y, 'HoldOut', 0.20);
+
+idxTrain = training(cv);
+idxTest  = test(cv);
+
+xTrain = x(idxTrain, :);
+xTest  = x(idxTest, :);
+
+yTrain = y(idxTrain);
+yTest  = y(idxTest);
+
+fprintf('\nTraining samples: %d\n', size(xTrain, 1));
+fprintf('Testing samples: %d\n', size(xTest, 1));
+
+% PCA - Training data only
+
+% Calculate mean using training data only
+myu = mean(xTrain, 1);
+
+% Center training data
+ZTrain = xTrain - myu;
+
+% Calculate standard deviation using training data only
+sigma = std(xTrain, 0, 1);
+
+% Identify non-constant features
+validFeatures = sigma > 0;
+
+fprintf('\nConstant features removed: %d\n', ...
+    sum(~validFeatures));
+
+% Remove constant features
+ZTrain = ZTrain(:, validFeatures);
+
+% Keep training mean and standard deviation
+myuValid = myu(validFeatures);
+sigmaValid = sigma(validFeatures);
+
+% Standardize training data
+ZTrain = ZTrain ./ sigmaValid;
+
+% Covariance matrix of standardized training data
+Zcov = cov(ZTrain);
+
+% Eigenvalue decomposition
+[V, A] = eig(Zcov);
+
+% Extract eigenvalues
+eVal = diag(A);
+
+% Sort eigenvalues in descending order
+[eVal, order] = sort(eVal, 'descend');
+
+% Rearrange eigenvectors accordingly
+V = V(:, order);
+
+% Explained variance
+Total = sum(eVal);
+
+percent = eVal / Total;
+
+cumulativePercentage = cumsum(percent);
+
+% Find number of principal components
+lengthOfData = find(cumulativePercentage >= percentage, 1);
+
+% Selected principal components
+VKomp = V(:, 1:lengthOfData);
+
+% Transform training data
+WTrain = ZTrain * VKomp;
+
+% Transform testing data using TRAINING parameters only
+
+% Remove the same constant features
+ZTest = xTest(:, validFeatures);
+
+% Center using training mean
+ZTest = ZTest - myuValid;
+
+% Standardize using training standard deviation
+ZTest = ZTest ./ sigmaValid;
+
+% Project using training eigenvectors
+WTest = ZTest * VKomp;
+
+% Display results
+
+fprintf('\nOriginal number of features: %d\n', p);
+
+fprintf('Remaining features after removing constant columns: %d\n', ...
+    sum(validFeatures));
+
+fprintf('Selected principal components: %d\n', lengthOfData);
+
+fprintf('Retained variance: %.2f%%\n', ...
+    cumulativePercentage(lengthOfData) * 100);
+
+fprintf('Training dataset dimensions: %d x %d\n', ...
+    size(WTrain, 1), size(WTrain, 2));
+
+fprintf('Testing dataset dimensions: %d x %d\n', ...
+    size(WTest, 1), size(WTest, 2));
+
+% Plot PCA results
+
+figure;
+
+subplot(2,1,1);
+
+plot(1:length(eVal), eVal, '-o', ...
+    'LineWidth', 1.5, 'MarkerSize', 5);
+
+xlabel('Principal Component');
+ylabel('Eigenvalue');
+title('PCA Eigenvalues (Training Data)');
+grid on;
+
+subplot(2,1,2);
+
+plot(1:length(cumulativePercentage), ...
+    cumulativePercentage * 100, '-o', ...
+    'LineWidth', 1.5, 'MarkerSize', 5);
+
+hold on;
+
+yline(percentage * 100, '--r', '95% Threshold');
+
+xline(lengthOfData, '--g', ...
+    sprintf('%d Components', lengthOfData));
+
+xlabel('Number of Principal Components');
+ylabel('Cumulative Explained Variance (%)');
+title('Cumulative Explained Variance (Training Data)');
+ylim([0 105]);
+
+grid on;
+hold off;
+
+sgtitle('PCA - Training Data Only');
+
+% Convert training PCA data to table
+
+reducedTrainData = array2table(WTrain);
+
+reducedTrainData.Properties.VariableNames = ...
+    compose('PC%d', 1:lengthOfData);
+
+reducedTrainData.Label = yTrain;
+
+% Convert testing PCA data to table
+
+reducedTestData = array2table(WTest);
+
+reducedTestData.Properties.VariableNames = ...
+    compose('PC%d', 1:lengthOfData);
+
+reducedTestData.Label = yTest;
+
+% Export to CSV
+
+writetable(reducedTrainData, ...
+    'PCA_Train_GLCM_Wavelet_Features.csv');
+
+writetable(reducedTestData, ...
+    'PCA_Test_GLCM_Wavelet_Features.csv');
+
+fprintf('\nPCA training dataset successfully saved!\n');
+fprintf('PCA testing dataset successfully saved!\n');
+
+figure;
+scatter3(WTrain(:,1), WTrain(:,2), WTrain(:,3), ...
+          40, yTrain, '*');
+
+xlabel('Feature 1');
+ylabel('Feature 2');
+zlabel('Feature 3');
+colorbar;
+grid on;
