@@ -1,10 +1,11 @@
-function [gambar_aug, label_aug] = TambahAugmentasi(gambar_train, label_train, jumlah)
+function [gambar_aug, label_aug, gambar_asli_aug] = TambahAugmentasi(gambar_train, label_train, jumlah)
 
     if nargin < 3
         jumlah = 100;
     end
 
     gambar_aug = cell(jumlah*2, 1);
+    gambar_asli_aug = cell(jumlah*2, 1);
     label_aug = zeros(jumlah*2, 1);
 
     counter = 1;
@@ -30,6 +31,9 @@ function [gambar_aug, label_aug] = TambahAugmentasi(gambar_train, label_train, j
             index = indeks_acak(k);
             
             image = gambar_train{index};
+
+            % Menyimpan gambar asli
+            gambar_asli_aug{counter} = image;
             
             % Melakukan augmentasi
             image_hasil = AugmentasiCitra(image);
@@ -44,6 +48,7 @@ function [gambar_aug, label_aug] = TambahAugmentasi(gambar_train, label_train, j
     randomizer = randperm(length(label_aug));
 
     gambar_aug = gambar_aug(randomizer);
+    gambar_asli_aug = gambar_asli_aug(randomizer);
     label_aug = label_aug(randomizer);
 
     % Mengubah label menjadi column vector

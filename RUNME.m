@@ -3,11 +3,11 @@ clear; clc; close all;
 rng(42);
 
 %% Dataset Path
-dataset_origa = "ORIGA/Images_Cropped/*.jpg";
-dataset_g1020 = "G1020/Images_Cropped/*.jpg";
+dataset_origa = "ORIGA/*.jpg";
+dataset_g1020 = "G1020_Cleaned/*.jpg";
 
-origa_list = 'ORIGA/OrigaList.csv';
-g1020_list = 'G1020/G1020.csv';
+origa_list = 'OrigaList.csv';
+g1020_list = 'G1020.csv';
 
 % Getting dataset already resized into 256 x 256
 [ORIGA_img, ORIGA_label] = GetImages(dataset_origa, origa_list);
@@ -111,7 +111,38 @@ for i = 1:c.NumTestSets
     fprintf('\n');
 end
 
+%% 5 Random Images After Augmentation
 
+% Mengambil Fold pertama
+fold = 1;
+
+trainIdx = training(c, fold);
+
+train_img = IMAGE_DATA(trainIdx);
+train_label = IMAGE_LABEL(trainIdx);
+
+% Melakukan augmentasi
+[Aug_Img, AugLabel, Before_Img] = TambahAugmentasi(train_img, train_label, 100);
+randomIdx = randperm(length(Aug_Img), 5);
+
+figure('Name', 'Before and After Augmentation', ...
+       'NumberTitle', 'off', ...
+       'Color', 'white', ...
+       'Position', [100 100 1000 900]);
+
+for i = 1:5
+
+    subplot(5, 2, (i-1)*2 + 1);
+    imshow(Before_Img{randomIdx(i)});
+    title("Before - Label " + AugLabel(randomIdx(i)));
+
+    subplot(5, 2, (i-1)*2 + 2);
+    imshow(Aug_Img{randomIdx(i)});
+    title("After - Label " + AugLabel(randomIdx(i)));
+
+end
+
+drawnow;
 %% Discrete Wavelet Transform Subband Extraction
 
 % Menentukan level dekomposisi
