@@ -1,4 +1,3 @@
-
 function [img,label] = GetImages(data_path, csv_path)
 
     allFiles = dir(data_path);
